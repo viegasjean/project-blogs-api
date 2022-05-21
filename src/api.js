@@ -3,7 +3,7 @@ const Joi = require('joi');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-const { User, Category } = require('./database/models');
+const { User, Category, BlogPost, PostCategory } = require('./database/models');
 const authenticate = require('./middlewares/authenticate');
 
 // ...
@@ -56,7 +56,7 @@ app.post('/user', async (req, res) => {
   return res.status(201).json({ token });
 });
 
-app.get('/user', authenticate, async (req, res) => {
+app.get('/user', authenticate, async (_req, res) => {
   const users = await User.findAll({
     attributes: { exclude: ['password'] },
   });
@@ -86,6 +86,37 @@ app.post('/categories', authenticate, async (req, res) => {
   if (error) return res.status(400).json({ message: error.message });
 
   return res.status(201).json({ id, name });
+});
+
+app.get('/categories', authenticate, async (_req, res) => {
+  const categories = await Category.findAll();
+  return res.status(200).json(categories);
+});
+
+app.post('/post', authenticate, async (req, res) => {
+  const { title, content, categoryIds, userId } = req.body;
+
+  const POSTSCHEMA = Joi.object({
+    title: Joi.string().required(),
+    content: Joi.string().required(),
+    categoryIds: Joi.array().required(),
+  });
+
+  const { error } = POSTSCHEMA.validate({ title, content, categoryIds });
+
+  if (error) return res.status(400).json({ message: 'Some required fields are missing' });
+
+  const category = await Category.findAll({ where: { id: categoryIds } });
+
+  if (category.length === 0) return res.status(400).json({ message: '"categoryIds" not found' });
+
+  const post = await BlogPost.create({ title, content, userId });
+
+  const postCategory = categoryIds.map((categoryId) => ({ postId: post.id, categoryId }));
+
+  await PostCategory.bulkCreate(postCategory);
+
+  return res.status(201).json(post);
 });
 
 // É importante exportar a constante `app`,
