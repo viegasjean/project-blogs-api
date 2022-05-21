@@ -1,8 +1,8 @@
 'use strict';
  const PostCategory = (sequelize, DataTypes) => {
   const PostCategory = sequelize.define('PostCategory', {
-    postId: DataTypes.INTEGER,
-    categoryId: DataTypes.INTEGER
+    postId: { type: DataTypes.INTEGER, primaryKey: true },
+    categoryId: { type: DataTypes.INTEGER, primaryKey: true }
   }, {
     timestamps: false
   });
