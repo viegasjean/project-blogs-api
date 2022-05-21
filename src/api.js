@@ -3,7 +3,7 @@ const Joi = require('joi');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-const { User } = require('./database/models');
+const { User, Category } = require('./database/models');
 const authenticate = require('./middlewares/authenticate');
 
 // ...
@@ -73,6 +73,19 @@ app.get('/user/:id', authenticate, async (req, res) => {
   if (!user) return res.status(404).json({ message: 'User does not exist' });
 
   return res.status(200).json(user);
+});
+
+app.post('/categories', authenticate, async (req, res) => {
+  const { name } = req.body;
+  const { id } = await Category.create(name);
+
+  const CATEGORYSCHEMA = Joi.object({ name: Joi.string().required() });
+
+  const { error } = CATEGORYSCHEMA.validate({ name });
+
+  if (error) return res.status(400).json({ message: error.message });
+
+  return res.status(201).json({ id, name });
 });
 
 // É importante exportar a constante `app`,
