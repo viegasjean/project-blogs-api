@@ -129,6 +129,20 @@ app.get('/post', authenticate, async (_req, res) => {
   res.status(200).json(posts);
 });
 
+app.get('/post/:id', authenticate, async (req, res) => {
+  const { id } = req.params;
+  const post = await BlogPost.findByPk(id, {
+    include: [
+      { model: User, as: 'user', attributes: { exclude: ['password'] } },
+      { model: Category, as: 'categories', through: { attributes: [] } },
+    ],
+  });
+
+  if (!post) return res.status(404).json({ message: 'Post does not exist' });
+
+  return res.status(200).json(post);
+});
+
 // É importante exportar a constante `app`,
 // para que possa ser utilizada pelo arquivo `src/server.js`
 module.exports = app;
