@@ -75,6 +75,12 @@ app.get('/user/:id', authenticate, async (req, res) => {
   return res.status(200).json(user);
 });
 
+app.delete('/user/me', authenticate, async (req, res) => {
+  const { userId } = req.body;
+  await User.destroy({ where: { id: userId } });
+  return res.status(204).end();
+});
+
 app.post('/categories', authenticate, async (req, res) => {
   const { name } = req.body;
   const { id } = await Category.create(name);
@@ -168,6 +174,21 @@ app.put('/post/:id', authenticate, async (req, res) => {
   });
 
   return res.status(200).json(post);
+});
+
+app.delete('/post/:id', authenticate, async (req, res) => {
+  const { id } = req.params;
+  const { userId } = req.body;
+
+  const blogPost = await BlogPost.findByPk(id);
+
+  if (!blogPost) return res.status(404).json({ message: 'Post does not exist' });
+
+  if (blogPost.userId !== userId) return res.status(401).json({ message: 'Unauthorized user' });
+
+  await BlogPost.destroy({ where: { id } });
+
+  return res.status(204).end();
 });
 
 // É importante exportar a constante `app`,
