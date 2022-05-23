@@ -143,6 +143,33 @@ app.get('/post/:id', authenticate, async (req, res) => {
   return res.status(200).json(post);
 });
 
+app.put('/post/:id', authenticate, async (req, res) => {
+  const { id } = req.params;
+  const { title, content, userId } = req.body;
+
+  if (!title || !content) {
+    return res.status(400).json({ message: 'Some required fields are missing' });
+  }
+
+  const authorized = await BlogPost.findOne({ where: { userId } });
+
+  if (!authorized) return res.status(401).json({ message: 'Unauthorized user' });
+
+  const update = await BlogPost.update(
+    { title, content },
+    { where: { id } },
+  );
+
+  const post = await BlogPost.findByPk(id, {
+    include: [
+      { model: User, as: 'user', attributes: { exclude: ['password'] } },
+      { model: Category, as: 'categories', through: { attributes: [] } },
+    ],
+  });
+
+  return res.status(200).json(post);
+});
+
 // É importante exportar a constante `app`,
 // para que possa ser utilizada pelo arquivo `src/server.js`
 module.exports = app;
