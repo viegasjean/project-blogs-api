@@ -155,7 +155,7 @@ app.put('/post/:id', authenticate, async (req, res) => {
 
   if (!authorized) return res.status(401).json({ message: 'Unauthorized user' });
 
-  const update = await BlogPost.update(
+  await BlogPost.update(
     { title, content },
     { where: { id } },
   );
