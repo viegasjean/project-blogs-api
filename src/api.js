@@ -1,6 +1,7 @@
 const express = require('express');
 const Joi = require('joi');
 const jwt = require('jsonwebtoken');
+const { Op } = require('sequelize');
 require('dotenv').config();
 
 const { User, Category, BlogPost, PostCategory } = require('./database/models');
@@ -133,6 +134,25 @@ app.get('/post', authenticate, async (_req, res) => {
     ],
   });
   res.status(200).json(posts);
+});
+
+app.get('/post/search', authenticate, async (req, res) => {
+  const { q } = req.query;
+
+  const blogPosts = await BlogPost.findAll({
+    include: [
+      { model: User, as: 'user', attributes: { exclude: ['password'] } },
+      { model: Category, as: 'categories', through: { attributes: [] } },
+    ],
+    where: {
+      [Op.or]: [
+        { title: { [Op.like]: `%${q}%` } },
+        { content: { [Op.like]: `%${q}%` } },
+      ],
+    },
+  });
+
+  return res.status(200).json(blogPosts);
 });
 
 app.get('/post/:id', authenticate, async (req, res) => {
